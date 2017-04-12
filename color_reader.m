@@ -88,7 +88,7 @@ while true
             else
                 sm.Speed = 2;
             end
-            sm.start()
+            sm.start();
             pause(.05);
             sm.stop();
         end

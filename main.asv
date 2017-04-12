@@ -81,7 +81,13 @@ while sorting
     closest_distance = inf; %the length of the smallest rgb vector
     
     % attempt to identify marble by finding marble most similar in cr_rgb
-    [closest, closest_distance] = find_closest(r,g,b,cr_rgb);
+    for i=1:size(cr_rgb,1)
+        distance = (r-cr_rgb(i,1))^2 + (g-cr_rgb(i,2))^2 + (b-cr_rgb(i,3))^2;
+        if distance < closest_distance
+            closest = cr_rgb(i,4);
+            closest_distance = distance;
+        end
+    end
     
     fprintf('%s\n',types(closest,:));
     
@@ -120,74 +126,14 @@ while sorting
         
         % open the floodgates!
         open_gate(gate_motor);
-    elseif sum(marbles_sorted) > 5 % we might be done sorting if we get a nothing in the middle
+    else
         consecutive_nothing = consecutive_nothing + 1;
-        if (consecutive_nothing == 3) % if we got 3 nothing in a row
+        if (consecutive_nothing == 3) &&
             open_gate(gate_motor);
-        elseif consecutive_nothing > 3
+        elseif (consecutive_nothing > 3
             sorting = false; % we are done sorting
         end
     end
     
 end
 
-fprintf('DONE SORTING!!\n');
-
-% Process all the bar codes
-% ============================================
-
-while true
-    color = readColorRGB(br);
-    fprintf('R:%03d G:%03d B:%03d\n',color(1),color(2),color(3));
-    
-    closest = -2; %identity of closest
-    closest_distance = inf; %closest distance
-    
-    for i=1:size(barcode_rgb,1)
-        distance = (color(1)-barcode_rgb(i,1))^2 + (color(2)-barcode_rgb(i,2))^2 + (color(3)-barcode_rgb(i,3))^2;
-        if distance < closest_distance
-            closest = barcode_rgb(i,4);
-            closest_distance = distance;
-        end
-    end
-    
-    disp(closest);
-    
-    if closest >= 0
-        current_code = [current_code num2str(closest)];
-    elseif numel(current_code) > 8
-        first = find(current_code=='1',1);
-        fprintf('%s\n',current_code(first+1:numel(current_code)));
-        [d1, d2] = decode(current_code);
-        
-        fprintf('%s x%d\n%s x%d\n',types(d1.t,:),d1.q,types(d2.t,:),d2.q);
-        counts(d1.t) = counts(d1.t) + d1.q;
-        counts(d2.t) = counts(d2.t) + d2.q;
-        
-        current_code = [];
-        
-        codes = codes + 1;
-        if codes == 4
-            break
-        end
-    else
-        current_code = [];
-    end
-    
-    %run motor
-    
-    brm.Speed = -90;
-    brm.start();
-    pause(.202);
-    brm.stop(1);
-    
-    pause(2);
-end
-
-fprintf('\nFINAL COUNTS\n================\n');
-
-for i=1:13
-    if counts(i) > 0
-        fprintf('%s x%d\n',types(i,:),counts(i));
-    end
-end
