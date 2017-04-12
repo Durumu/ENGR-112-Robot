@@ -1,6 +1,6 @@
 function [closest, closest_distance] = find_closest(r,g,b,rgb_list)
 
-closest = 0;
+closest = -1;
 closest_distance = inf;
 for i=1:size(rgb_list,1)
     % treating r,g,b as a point in 3-space, distance is equal to the dot

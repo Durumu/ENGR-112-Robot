@@ -64,10 +64,7 @@ while sorting
     starting_dispenser_rotation = readRotation(dispenser_motor);
     rotation_amount = 97; %97 degrees is the amount to rotate for 1 marble
     while (readRotation(dispenser_motor) > (starting_dispenser_rotation-97))
-        dispenser_motor.Speed = -40;
-        dispenser_motor.start();
-        pause(.01);
-        dispenser_motor.stop();
+        run_motor(dispenser_motor,-40,.01);
     end
    
     % wait for the marble to hit color reader area
@@ -76,9 +73,6 @@ while sorting
     % get and print color from the color reader
     [r, g, b] = read_rgb(color_reader);
     fprintf('R: %03d, G: %03d, B: %03d\n',r,g,b);
-    
-    closest = -2; %identity of closest marble
-    closest_distance = inf; %the length of the smallest rgb vector
     
     % attempt to identify marble by finding marble most similar in cr_rgb
     [closest, closest_distance] = find_closest(r,g,b,cr_rgb);
@@ -109,13 +103,10 @@ while sorting
         while (abs(current_point-(rotations(closest)+starting_sort_rotation)) >= 2)
             current_point = readRotation(sort_motor);
             if ((rotations(closest)+starting_sort_rotation) < current_point)
-                sort_motor.Speed = -2;
+                run_motor(sort_motor,-2,.05);
             else
-                sort_motor.Speed = 2;
+                run_motor(sort_motor,-2,.05);
             end
-            sort_motor.start()
-            pause(.05);
-            sort_motor.stop();
         end
         
         % open the floodgates!
@@ -131,63 +122,58 @@ while sorting
     
 end
 
-fprintf('DONE SORTING!!\n');
+fprintf('DONE SORTING\n');
 
 % Process all the bar codes
 % ============================================
 
-while true
-    color = readColorRGB(br);
-    fprintf('R:%03d G:%03d B:%03d\n',color(1),color(2),color(3));
+processing_codes = true;
+while processing_codes
+    [r, g, b] = read_rgb(barcode_reader);
+    fprintf('R: %03d, G: %03d, B: %03d\n',r,g,b);
     
-    closest = -2; %identity of closest
-    closest_distance = inf; %closest distance
+    [closest_br, closest_distance_br] = find_closest(r,g,b,barcode_rgb);
     
-    for i=1:size(barcode_rgb,1)
-        distance = (color(1)-barcode_rgb(i,1))^2 + (color(2)-barcode_rgb(i,2))^2 + (color(3)-barcode_rgb(i,3))^2;
-        if distance < closest_distance
-            closest = barcode_rgb(i,4);
-            closest_distance = distance;
-        end
-    end
+    disp(closest_br);
     
-    disp(closest);
-    
-    if closest >= 0
-        current_code = [current_code num2str(closest)];
+    if closest_br >= 0
+        current_code = [current_code num2str(closest_br)];
     elseif numel(current_code) > 8
-        first = find(current_code=='1',1);
-        fprintf('%s\n',current_code(first+1:numel(current_code)));
+        %first = find(current_code=='1',1);
+        %fprintf('%s\n',current_code(first+1:numel(current_code)));
         [d1, d2] = decode(current_code);
         
+        % print the amount of each marble needed for debug reasons
         fprintf('%s x%d\n%s x%d\n',types(d1.t,:),d1.q,types(d2.t,:),d2.q);
-        counts(d1.t) = counts(d1.t) + d1.q;
-        counts(d2.t) = counts(d2.t) + d2.q;
+        
+        % update the amount of marbles needed with new quantities
+        marbles_needed(d1.t) = marbles_needed(d1.t) + d1.q;
+        marbles_needed(d2.t) = marbles_needed(d2.t) + d2.q;
         
         current_code = [];
         
         codes = codes + 1;
         if codes == 4
-            break
+            processing_codes = false;
         end
     else
         current_code = [];
     end
     
-    %run motor
-    
-    brm.Speed = -90;
-    brm.start();
-    pause(.202);
-    brm.stop(1);
-    
-    pause(2);
-end
-
-fprintf('\nFINAL COUNTS\n================\n');
-
-for i=1:13
-    if counts(i) > 0
-        fprintf('%s x%d\n',types(i,:),counts(i));
+    %run barcode motor
+    if processing_codes
+        run_motor(barcode_motor,-90,.202);
+        pause(2);
     end
 end
+
+fprintf('DONE PROCESSING BAR CODES\nFINAL COUNTS:\n');
+
+for i=1:8
+    if marbles_needed(i) > 0
+        fprintf('%s x%d\n',types(i,:),marbles_needed(i));
+    end
+end
+
+% TODO -- Dispense the marbles...
+% ============================================
