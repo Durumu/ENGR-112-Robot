@@ -13,7 +13,6 @@ starting_dispenser_rotation = readRotation(belt_motor);
 % Sort all the marbles 
 % ============================================ 
  
-while true 
 sorting = true; 
 while sorting 
      
@@ -77,7 +76,7 @@ while sorting
             if ((rotations(closest)+starting_sort_rotation) < current_point)
                 run_motor(sort_motor,-2,.05);
             else
-                run_motor(sort_motor,-2,.05);
+                run_motor(sort_motor,2,.05);
             end
         end
         
@@ -95,57 +94,3 @@ while sorting
 end
 
 fprintf('DONE SORTING\n');
-
-% Process all the bar codes
-% ============================================
-
-processing_codes = true;
-while processing_codes
-    [r, g, b] = read_rgb(barcode_reader);
-    fprintf('R: %03d, G: %03d, B: %03d\n',r,g,b);
-    
-    [closest_br, closest_distance_br] = find_closest(r,g,b,barcode_rgb);
-    
-    disp(closest_br);
-    
-    if closest_br >= 0
-        current_code = [current_code num2str(closest_br)];
-    elseif numel(current_code) > 8
-        %first = find(current_code=='1',1);
-        %fprintf('%s\n',current_code(first+1:numel(current_code)));
-        [d1, d2] = decode(current_code);
-        
-        % print the amount of each marble needed for debug reasons
-        fprintf('%s x%d\n%s x%d\n',types(d1.t,:),d1.q,types(d2.t,:),d2.q);
-        
-        % update the amount of marbles needed with new quantities
-        marbles_needed(d1.t) = marbles_needed(d1.t) + d1.q;
-        marbles_needed(d2.t) = marbles_needed(d2.t) + d2.q;
-        
-        current_code = [];
-        
-        codes = codes + 1;
-        if codes == 4
-            processing_codes = false;
-        end
-    else
-        current_code = [];
-    end
-    
-    %run barcode motor
-    if processing_codes
-        run_motor(barcode_motor,-90,.202);
-        pause(2);
-    end
-end
-
-fprintf('DONE PROCESSING BAR CODES\nFINAL COUNTS:\n');
-
-for i=1:8
-    if marbles_needed(i) > 0
-        fprintf('%s x%d\n',types(i,:),marbles_needed(i));
-    end
-end
-
-% TODO -- Dispense the marbles...
-% ============================================

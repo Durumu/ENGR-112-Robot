@@ -1,4 +1,6 @@
-clear variables;
+clear;
+% a marble struct t value represents one of these types
+%types = ['LW';'SW';'LR';'SR';'LB';'SB';'ST';'HD'];
 
 types = [
     'large white glass '; % 1
@@ -25,18 +27,24 @@ barcode_rgb = [
 counts = zeros(1,8);
 codes = 0;
 
-e = legoev3('usb');
+e2 = legoev3('usb');
 
-barcode_reader = colorSensor(e); 
-knock_motor = motor(e,'A'); 
-belt_motor = motor(e,'B'); 
-barcode_motor = motor(e,'C'); 
+dm = motor(e2,'A'); % dispenses the marbles
+
+cbm = motor(e2,'B'); % makes the conveyor belt go
+
+br = colorSensor(e2);
+brm = motor(e2,'C'); % pushes the barcodes through
 
 current_code = [];
 
-starting_belt_rotation = readRotation(belt_motor); 
-starting_knock_rotation = readRotation(knock_motor); 
+starting_position = readRotation(cbm);
 
+
+% %Barcode 
+
+while true
+   
 % Process all the bar codes
 % ============================================
 
