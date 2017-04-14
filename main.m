@@ -1,64 +1,36 @@
-clear variables;
-
-% Initialize data
-% ===========================================
-
-types = [
-    'large white glass '; % 1
-    'small white glass '; % 2
-    'large red glass   '; % 3
-    'small red glass   '; % 4
-    'large blue glass  '; % 5
-    'small blue glass  '; % 6
-    'steel             '; % 7
-    'HDPE plastic      '; % 8
-    'large yellow glass'; % 9
-    'small yellow glass'; %10
-    'large green glass '; %11
-    'small green glass '; %12
-    'nothing           '];%13
-
-rotations = [32,0,20,-12,10,-22,-32,-45,45,45,45,45,45];
-
-cr_rgb = load('eabc_rgb.txt');
-
-rgbfile = fopen('eabc_rgb.txt','a');
-
-linenumber = size(cr_rgb,1)+1;
-
-marbles_sorted = zeros(1,8);
-marbles_needed = zeros(1,8);
-
-consecutive_nothing = 0;
-
-current_code = [];
-codes_processed = 0;
-
-% Initialize ev3s e and f
-% ===========================================
-
-e = legoev3('usb');
-f = legoev3('bt','00165344db01');
-
-color_reader = colorSensor(e);
-gate_motor = motor(e,'A');
-dispenser_motor = motor(e,'B');
-sort_motor = motor(e,'C');
-
-barcode_reader = colorSensor(f);
-knock_motor = motor(f,'A');
-belt_motor = motor(f,'B');
-barcode_motor = motor(f,'C');
-
-
-starting_sort_rotation = readRotation(sort_motor);
-starting_dispenser_rotation = readRotation(belt_motor);
-
-% Sort all the marbles
-% ============================================
-
-sorting = true;
-while sorting
+sort_motor = motor(e,'C'); 
+ 
+barcode_reader = colorSensor(f); 
+knock_motor = motor(f,'A'); 
+belt_motor = motor(f,'B'); 
+barcode_motor = motor(f,'C'); 
+ 
+ 
+starting_sort_rotation = readRotation(sort_motor); 
+starting_belt_rotation = readRotation(belt_motor); 
+starting_dispenser_rotation = readRotation(belt_motor); 
+ 
+% Sort all the marbles 
+% ============================================ 
+ 
+while true 
+sorting = true; 
+while sorting 
+     
+    % run the dispenser 
+    dispenser_motor.Speed = -35; 
+    dispenser_motor.start(); 
+    pause(0.60); 
+    dispenser_motor.stop(1) 
+    % run the dispenser for 1 marble worth of rotation 
+    starting_dispenser_rotation = readRotation(dispenser_motor); 
+    rotation_amount = 97; %97 degrees is the amount to rotate for 1 marble 
+    while (readRotation(dispenser_motor) > (starting_dispenser_rotation-97)) 
+        dispenser_motor.Speed = -40; 
+        dispenser_motor.start(); 
+        pause(.01); 
+        dispenser_motor.stop(); 
+    end 
     
     % run the dispenser for 1 marble worth of rotation
     starting_dispenser_rotation = readRotation(dispenser_motor);
