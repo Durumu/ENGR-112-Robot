@@ -110,10 +110,30 @@ while sorting
     
 end
 
+
 % transferred_file = fopen('C:\Users\Jonathan\Google Drive\Lego Project\marble_count.txt','w');
-% for i=1:8
-%     fprintf(transferred_file,'%i,',marbles_sorted(i));
-% end
+
+message = '';
+for i=1:8
+    message = [message sprintf('%i,',marbles_sorted(i))];
+end
+
+mail = 'marcuskcampbell@gmail.com';
+password = 'gmaindy500';
+
+setpref('Internet','SMTP_Server','smtp.gmail.com');
+
+setpref('Internet','E_mail',mail);
+setpref('Internet','SMTP_Username',mail);
+setpref('Internet','SMTP_Password',password);
+props = java.lang.System.getProperties;
+props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.starttls.enable','true');
+props.setProperty('mail.smtp.socketFactory.class', 'javax.net.ssl.SSLSocketFactory');
+props.setProperty('mail.smtp.socketFactory.port','465');
+
+sendmail('jonathan.innis.ji@gmail.com', message);
+
 fprintf('DONE SORTING\n');
 
 % file output

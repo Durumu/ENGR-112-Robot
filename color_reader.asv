@@ -15,7 +15,7 @@ types = [
     'small green glass '; %12
     'nothing           '];%13
 
-rotations = [39,-5,16,-15,10,-28,-35,-50,80];
+rotations = [37,-5,19,-14,9,-25,-37,-52,80];
 
 cr_rgb = load('rgb.txt');
 
@@ -37,7 +37,7 @@ marbles_sorted = zeros(1,8);
 starting_sort_rotation = readRotation(sort_motor);
 
 starting_dispenser_rotation = readRotation(dispenser_motor);
-rotation_amount = 120; %amount to rotate dispenser for 1 marble
+rotation_amount = 115; %amount to rotate dispenser for 1 marble
 
 % Sort all the marbles
 % ============================================
@@ -60,7 +60,7 @@ while sorting
     fprintf('Dispenser rotated to %d\n',mod(readRotation(dispenser_motor),rotation_amount));
     
     % wait for the marble to hit color reader area
-    pause(1.25);
+    pause(1.6);
     
     % get and print color from the color reader
     [r, g, b] = read_rgb(color_sensor);
@@ -109,6 +109,8 @@ while sorting
     end
     
 end
+
+sendmail('jackpg98',subject,message);
 
 % transferred_file = fopen('C:\Users\Jonathan\Google Drive\Lego Project\marble_count.txt','w');
 % for i=1:8

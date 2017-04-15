@@ -4,7 +4,7 @@
 %
 % David Willingham, November 9 2011, MathWorks Australia
 
-function [body] = readmail()
+function [subject, body] = readmail()
 
 %% Connecting to Outlook
 outlook = actxserver('Outlook.Application');
