@@ -15,7 +15,7 @@ types = [
     'small green glass '; %12
     'nothing           '];%13
 
-rotations = [33,-3,20,-15,10,-28,-35,-50,80];
+rotations = [37,-5,19,-14,9,-25,-37,-52,80];
 
 cr_rgb = load('rgb.txt');
 
@@ -28,42 +28,39 @@ e = legoev3('usb');
 color_sensor = colorSensor(e);
 touch_sensor = touchSensor(e);
 
-
 gate_motor = motor(e,'A');
 dispenser_motor = motor(e,'B');
 sort_motor = motor(e,'C');
 
-starting_rotation = readRotation(sort_motor);
-
 marbles_sorted = zeros(1,8);
- 
+
 starting_sort_rotation = readRotation(sort_motor);
-starting_dispenser_rotation = readRotation(dispenser_motor); 
- 
-% Sort all the marbles 
-% ============================================ 
- 
+
+starting_dispenser_rotation = readRotation(dispenser_motor);
+rotation_amount = 115; %amount to rotate dispenser for 1 marble
+
+% Sort all the marbles
+% ============================================
+
 pause(1);
 
-sorting = true; 
-while sorting 
+sorting = true;
+while sorting
     % run the dispenser for 1 marble worth of rotation
-    
-    rotation_amount = 120; %amount to rotate for 1 marble
-   starting_dispenser_rotation = readRotation(dispenser_motor);
-    while (readRotation(dispenser_motor) > (starting_dispenser_rotation-rotation_amount+40))
-        run_motor(dispenser_motor,-100,.01,0);
-        while readTouch(touch_sensor)
-            pause(.1);
+       starting_dispenser_rotation = readRotation(dispenser_motor);
+        while (readRotation(dispenser_motor) > (starting_dispenser_rotation - rotation_amount*.75))
+            run_motor(dispenser_motor,-75,.01,0);
+            while readTouch(touch_sensor)
+                pause(.1);
+            end
         end
-    end
     
-    %motor_to_rotation(dispenser_motor,readRotation(dispenser_motor)-rotation_amount,15,.01);
+    %motor_to_rotation(dispenser_motor,readRotation(dispenser_motor)-rotation_amount,30,.01);
     
-    fprintf('Dispenser rotated to %d\n',readRotation(dispenser_motor));
-   
+    fprintf('Dispenser rotated to %d\n',mod(readRotation(dispenser_motor),rotation_amount));
+    
     % wait for the marble to hit color reader area
-    pause(1);
+    pause(1.6);
     
     % get and print color from the color reader
     [r, g, b] = read_rgb(color_sensor);
@@ -83,7 +80,7 @@ while sorting
         beep(e); % alert us of faraway read
     end
     
-    if (closest < 13) 
+    if (closest < 13)
         % identified as a marble, not as nothing, so the streak is broken
         consecutive_nothing = 0;
         
@@ -96,9 +93,9 @@ while sorting
         fprintf('Sorting the marble\n');
         
         % move the sorting motor to the right position
-        motor_to_rotation(sort_motor,rotations(max(closest,9))+starting_sort_rotation,10,.01,1);
+        motor_to_rotation(sort_motor,rotations(min(closest,9))+starting_sort_rotation,10,.01,1);
         
-        fprintf('Starting rotation: %d\n',readRotation(dispenser_motor));
+        fprintf('Sort rotation: %d (correct: %d)\n',readRotation(sort_motor)-starting_sort_rotation,rotations(min(closest,9)));
         
         % open the floodgates!
         open_gate(gate_motor);

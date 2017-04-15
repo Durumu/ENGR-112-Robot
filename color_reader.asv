@@ -15,7 +15,7 @@ types = [
     'small green glass '; %12
     'nothing           '];%13
 
-rotations = [33,-3,20,-15,10,-28,-35,-50,80,80,80,80,80];
+rotations = [39,-5,16,-15,10,-28,-35,-50,80];
 
 cr_rgb = load('rgb.txt');
 
@@ -28,38 +28,39 @@ e = legoev3('usb');
 color_sensor = colorSensor(e);
 touch_sensor = touchSensor(e);
 
-
 gate_motor = motor(e,'A');
 dispenser_motor = motor(e,'B');
 sort_motor = motor(e,'C');
 
-starting_rotation = readRotation(sort_motor);
-
 marbles_sorted = zeros(1,8);
- 
+
 starting_sort_rotation = readRotation(sort_motor);
-starting_dispenser_rotation = readRotation(dispenser_motor); 
- 
-% Sort all the marbles 
-% ============================================ 
- 
-sorting = true; 
-while sorting 
-    fprintf('Running\n');
+
+starting_dispenser_rotation = readRotation(dispenser_motor);
+rotation_amount = 120; %amount to rotate dispenser for 1 marble
+
+% Sort all the marbles
+% ============================================
+
+pause(1);
+
+sorting = true;
+while sorting
     % run the dispenser for 1 marble worth of rotation
+       starting_dispenser_rotation = readRotation(dispenser_motor);
+        while (readRotation(dispenser_motor) > (starting_dispenser_rotation - rotation_amount*.75))
+            run_motor(dispenser_motor,-75,.01,0);
+            while readTouch(touch_sensor)
+                pause(.1);
+            end
+        end
     
-    rotation_amount = 120; %97 degrees is the amount to rotate for 1 marble
-%    starting_dispenser_rotation = readRotation(dispenser_motor);
-%     while (readRotation(dispenser_motor) > (starting_dispenser_rotation-rotation_amount))
-%         run_motor(dispenser_motor,-100,.01,0);
-%         while readTouch(touch_sensor)
-%             pause(.1);
-%         end
-%     end
-    motor_to_rotation(dispenser_motor,readRotation(dispenser_motor)-rotation_amount,15,.01,5);
-   
+    %motor_to_rotation(dispenser_motor,readRotation(dispenser_motor)-rotation_amount,30,.01);
+    
+    fprintf('Dispenser rotated to %d\n',mod(readRotation(dispenser_motor),rotation_amount));
+    
     % wait for the marble to hit color reader area
-    pause(1.1);
+    pause(1.25);
     
     % get and print color from the color reader
     [r, g, b] = read_rgb(color_sensor);
@@ -68,7 +69,7 @@ while sorting
     % attempt to identify marble by finding marble most similar in cr_rgb
     [closest, closest_distance] = find_closest(r,g,b,cr_rgb);
     
-    fprintf('%s\n',types(closest,:));
+    fprintf('Identfied as %s\n',types(closest,:));
     
     if (closest_distance > 5)
         % we have new data so we will write it to the main file.
@@ -79,7 +80,7 @@ while sorting
         beep(e); % alert us of faraway read
     end
     
-    if (closest < 13) 
+    if (closest < 13)
         % identified as a marble, not as nothing, so the streak is broken
         consecutive_nothing = 0;
         
@@ -89,17 +90,12 @@ while sorting
             marbles_sorted(closest) = marbles_sorted(closest) + 1;
         end
         
+        fprintf('Sorting the marble\n');
+        
         % move the sorting motor to the right position
-        motor_to_rotation(sort_motor,rotations(closest)+starting_sort_rotation);
-        current_point = readRotation(sort_motor);
-        while (abs(current_point-(rotations(closest)+starting_sort_rotation)) >= 2)
-            current_point = readRotation(sort_motor);
-            if ((rotations(closest)+starting_sort_rotation) < current_point)
-                run_motor(sort_motor,-2,.05,0);
-            else
-                run_motor(sort_motor,2,.05,0);
-            end
-        end
+        motor_to_rotation(sort_motor,rotations(min(closest,9))+starting_sort_rotation,10,.01,1);
+        
+        fprintf('Sort rotation: %d (correct: %d)\n',readRotation(sort_motor)-starting_sort_rotation,rotations(min(closest,9)));
         
         % open the floodgates!
         open_gate(gate_motor);
@@ -114,10 +110,10 @@ while sorting
     
 end
 
-%transferred_file = fopen('C:\Users\Jonathan\Google Drive\Lego Project\marble_count.txt','w');
-for i=1:8
-    fprintf(transferred_file,'%i,',marbles_sorted(i));
-end
+% transferred_file = fopen('C:\Users\Jonathan\Google Drive\Lego Project\marble_count.txt','w');
+% for i=1:8
+%     fprintf(transferred_file,'%i,',marbles_sorted(i));
+% end
 fprintf('DONE SORTING\n');
 
 % file output
