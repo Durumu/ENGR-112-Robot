@@ -100,6 +100,11 @@ for i=1:8
     end
 end
 
+while exists('C:\Users\jackp\Google Drive\Lego Project\marble_count.txt','file') ~= 2
+    pause(1);
+    fprintf('waiting...\n');
+end
+
 % TODO -- Dispense the marbles...
 % ============================================
 
