@@ -83,15 +83,7 @@ while sorting
         end
         
         % move the sorting motor to the right position
-        current_point = readRotation(sort_motor);
-        while (abs(current_point-(rotations(closest)+starting_sort_rotation)) >= 2)
-            current_point = readRotation(sort_motor);
-            if ((rotations(closest)+starting_sort_rotation) < current_point)
-                run_motor(sort_motor,-2,.05);
-            else
-                run_motor(sort_motor,2,.05);
-            end
-        end
+        motor_to_rotation(sort_motor,rotations(closest)+starting_sort_rotation);
         
         % open the floodgates!
         open_gate(gate_motor);
