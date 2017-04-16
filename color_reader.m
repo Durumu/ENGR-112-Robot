@@ -54,6 +54,7 @@ while sorting
                 pause(.1);
             end
         end
+        stop(dispenser_motor,1);
     
     %motor_to_rotation(dispenser_motor,readRotation(dispenser_motor)-rotation_amount,30,.01);
     

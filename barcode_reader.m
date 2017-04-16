@@ -1,5 +1,10 @@
 clear variables;
 
+try
+    delete 'C:\Users\jackp\Google Drive\Lego Project\marble_count.txt'
+catch e
+end
+
 types = [
     'large white glass '; % 1
     'small white glass '; % 2
@@ -17,9 +22,9 @@ types = [
 
 
 barcode_rgb = [
-    300,300,250, 0;
-    47, 58, 32, 1;
-    85,93, 69,-1];
+    250,250,200, 0;
+    33, 33, 33, 1;
+    124, 22, 14,-1];
 
 rotations = [620,367,538,290,451,195,100,0];
 marble_order = [8,7,6,4,2,5,3,1];
@@ -39,12 +44,12 @@ codes_processed = 0;
 starting_belt_rotation = readRotation(belt_motor);
 starting_knock_rotation = readRotation(knock_motor);
 
-marbles_needed = ones(1,8);%[0 0 0 1 0 1 0 0];%
+marbles_needed = [1 1 1 1 0 0 0 0];%zeros(1,8);%
 
 % Process all the bar codes
 % ============================================
 
-processing_codes = false;%true;
+processing_codes = false%true;
 while processing_codes
     [r, g, b] = read_rgb(barcode_sensor);
     fprintf('R: %03d, G: %03d, B: %03d\n',r,g,b);
@@ -70,26 +75,24 @@ while processing_codes
         current_code = [];
         
         codes_processed = codes_processed + 1;
-        if codes_processed == 1%4
+        if codes_processed == 1
             processing_codes = false;
         end
     else
         current_code = [];
     end
     
-    pause(0.75);
-    
     %run barcode motor
     if processing_codes
         %rotate the barcode reader the correct amount
-        rotation_amount = 96;
+        rotation_amount = 95;
         starting_barcode_rotation = readRotation(barcode_motor);
         while (readRotation(barcode_motor) > (starting_barcode_rotation-rotation_amount))
-            run_motor(barcode_motor,-40,.01);
+            run_motor(barcode_motor,-70,.01);
         end
     end
     
-    pause(0.75);
+    pause(1.5);
 end
 
 fprintf('DONE PROCESSING BAR CODES\nFINAL COUNTS:\n');
@@ -100,7 +103,7 @@ for i=1:8
     end
 end
 
-while exists('C:\Users\jackp\Google Drive\Lego Project\marble_count.txt','file') ~= 2
+while exist('C:\Users\jackp\Google Drive\Lego Project\marble_count.txt','file') ~= 2
     pause(1);
     fprintf('waiting...\n');
 end
@@ -108,31 +111,42 @@ end
 % TODO -- Dispense the marbles...
 % ============================================
 
-% while true
-%     fprintf('%d\n',readRotation(belt_motor)-starting_belt_rotation);
-% end
+marbles_available = load('C:\Users\jackp\Google Drive\Lego Project\marble_count.txt');
 
-dispensing = true;
-for i=marble_order
-    while (marbles_needed(i) > 0) && dispensing         
-        %move to the place of the marble
-        motor_to_rotation(belt_motor,rotations(i)+starting_belt_rotation,40,0.03,3);
-        
-        fprintf('%d\n',readRotation(belt_motor)-starting_belt_rotation);
-        
-        %knock that fucker right out
-        rotation_amount = 200;
-        
-        while (readRotation(knock_motor) > (starting_knock_rotation-rotation_amount))
-            run_motor(knock_motor,-100,.01,0);
-        end
-        while (readRotation(knock_motor) < (starting_knock_rotation))
-            run_motor(knock_motor,70,.01);
-        end
-        
-        % we don't need any more of those bad boys
-        marbles_needed(i) = marbles_needed(i) - 1;
+disp(marbles_available);
+
+for i=1:8
+    if marbles_available(i) < (marbles_needed(i) * 3) 
+        beep(e);
+        error('Not enough marbles of type %s',types(i));
     end
 end
 
+dispensing = true;
+
+for a=1:3
+    for i=marble_order
+        for j=1:marbles_needed(i)
+            %move to the place of the marble
+            motor_to_rotation(belt_motor,rotations(i)+starting_belt_rotation,40,0.03,3);
+
+            fprintf('%d\n',readRotation(belt_motor)-starting_belt_rotation);
+
+            %knock that fucker right out
+            rotation_amount = 200;
+
+            while (readRotation(knock_motor) > (starting_knock_rotation-rotation_amount))
+                run_motor(knock_motor,-100,.01,0);
+            end
+            while (readRotation(knock_motor) < (starting_knock_rotation))
+                run_motor(knock_motor,70,.01);
+            end
+        end
+    end
+    
+    if (a < 3)
+        pause(5);
+    end
+end
+    
 motor_to_rotation(belt_motor,starting_belt_rotation,40,0.03,2);
